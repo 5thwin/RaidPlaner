@@ -18,7 +18,7 @@ export const RAIDS: RaidInfo[] = [
 		itemLevel: 1430,
 	},
 	{
-		id: 'kakul-saydon',
+		id: 'kouku-saton',
 		name: '쿠크세이튼',
 		gates: 3,
 		players: 4,
