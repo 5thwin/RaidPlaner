@@ -12,7 +12,7 @@ export default function RaidGroup({ raidInfo }: Props) {
       </p>
       <div id={`raid-group-contents-${raidInfo.id}`} className='flex'>
         <div id={`${raidInfo.id}-normal`}></div>
-        <div id={`${raidInfo.id}-normal`}></div>
+        <div id={`${raidInfo.id}-hard`}></div>
       </div>
     </div>
   </div>

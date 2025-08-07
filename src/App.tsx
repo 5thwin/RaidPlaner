@@ -1,11 +1,8 @@
-import { useState } from 'react'
 import viteLogo from '/vite.svg'
 import './App.css'
-import { RAIDS } from './data/raids'
-import RaidGroup from './components/raids/RaidGroup'
+import RaidList from './components/raids/RaidList'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <main className='flex flex-col items-center '>
@@ -15,14 +12,7 @@ function App() {
         </a>
       </div>
       <h1>Vite + React</h1>
-      <div className='flex flex-col'>
-        {RAIDS.map(
-          (raid) => {
-            return RaidGroup({ raidInfo: raid })
-          }
-        )}
-
-      </div>
+      <RaidList />
     </main>
   )
 }

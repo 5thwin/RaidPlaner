@@ -21,7 +21,7 @@ export type PartyRaid = {
 	hard: Room[];
 	hell: Room[];
 };
-const RAID = {
+export const RAID = {
 	visible: {
 		valtan: false,
 		biakiss: false,
