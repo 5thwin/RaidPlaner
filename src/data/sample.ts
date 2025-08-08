@@ -21,7 +21,7 @@ export type PartyRaid = {
 	hard: Room[];
 	hell: Room[];
 };
-export const RAID = {
+export const SAMPLE_SERVER_RAID_DATA = {
 	visible: {
 		valtan: false,
 		biakiss: false,
