@@ -41,10 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function signInWithGoogle() {
-    // Google 계정으로 로그인 창을 띄운다. 성공하면 Supabase가 알아서
-    // 현재 페이지로 돌아오면서 위 onAuthStateChange가 세션을 채워준다.
+    // Google 계정으로 로그인 창을 띄운다. redirectTo를 명시하지 않으면
+    // Supabase 대시보드에 저장된 기본 Site URL로 돌아가버리므로,
+    // 지금 접속한 주소(로컬/배포 모두)로 돌아오도록 직접 지정한다.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
     });
 
     if (error) {

@@ -8,6 +8,7 @@ import { MemberList } from "@/components/guilds/MemberList";
 import { InviteCodeCard } from "@/components/guilds/InviteCodeCard";
 import { RaidVisibilityList } from "@/components/guilds/RaidVisibilityList";
 import { DeleteGuildModal } from "@/components/guilds/DeleteGuildModal";
+import { ConfirmModal } from "@/components/layout/ConfirmModal";
 import { usePageHeaderExtra } from "@/hooks/usePageHeaderExtra";
 import { hasGuildRoleAtLeast } from "@/lib/guildRole";
 import type { GuildRole } from "@/types/guild";
@@ -44,6 +45,7 @@ export function GuildDetailPage() {
     error,
     updateMemberRole,
     regenerateInviteCode,
+    leaveGuild,
     deleteGuild,
   } = useGuildMembers(guildId);
   const {
@@ -54,6 +56,7 @@ export function GuildDetailPage() {
   } = useGuildRaidVisibility(guildId);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
 
   // "내 공대 목록으로" 뒤로가기 링크는 이 페이지에서만 필요한 헤더 콘텐츠이므로
   // 고정 헤더에 직접 올려보낸다.
@@ -79,6 +82,8 @@ export function GuildDetailPage() {
     );
   }
 
+  const myMembershipId =
+    members.find((member) => member.user_id === user.id)?.id ?? null;
   const myRole: GuildRole | null =
     members.find((member) => member.user_id === user.id)?.role ?? null;
 
@@ -97,6 +102,16 @@ export function GuildDetailPage() {
   async function handleDeleteGuild() {
     await deleteGuild();
     setIsDeleteModalOpen(false);
+    navigate("/");
+  }
+
+  async function handleLeaveGuild() {
+    if (!myMembershipId) {
+      return;
+    }
+
+    await leaveGuild(myMembershipId);
+    setIsLeaveModalOpen(false);
     navigate("/");
   }
 
@@ -139,6 +154,22 @@ export function GuildDetailPage() {
         myRole={myRole}
         onChangeRole={handleChangeRole}
       />
+
+      {myRole && myRole !== "master" && myMembershipId && (
+        <div className="flex w-full max-w-xl items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            공대에서 탈퇴하면 이 공대의 파티/멤버 목록에서 더 이상 보이지
+            않습니다. 다시 참여하려면 초대 코드가 필요합니다.
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsLeaveModalOpen(true)}
+            className="shrink-0 rounded-md bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+          >
+            공대 탈퇴
+          </button>
+        </div>
+      )}
 
       {hasGuildRoleAtLeast(myRole, "officer") && (
         <div className="flex w-full max-w-xl flex-col gap-2">
@@ -190,6 +221,16 @@ export function GuildDetailPage() {
           guildName={guild.name}
           onDelete={handleDeleteGuild}
           onClose={() => setIsDeleteModalOpen(false)}
+        />
+      )}
+
+      {isLeaveModalOpen && guild && (
+        <ConfirmModal
+          title="공대 탈퇴"
+          message={`정말 '${guild.name}' 공대에서 탈퇴하시겠습니까?`}
+          confirmLabel="탈퇴"
+          onConfirm={handleLeaveGuild}
+          onClose={() => setIsLeaveModalOpen(false)}
         />
       )}
     </div>

@@ -149,6 +149,24 @@ export function useGuildMembers(guildId: string | undefined) {
     await reload();
   }
 
+  // 공대에서 탈퇴한다: 내 guild_members row(memberId)를 스스로 삭제한다.
+  // guild_members_delete RLS 정책이 "user_id = auth.uid()인 행은 누구나 삭제 가능"을
+  // 허용하므로 role(guest~officer) 상관없이 성공한다. master는 UI에서 이 버튼을 아예
+  // 보여주지 않는다 — master가 탈퇴하면 그 공대에 master가 없어져 관리가 불가능해지므로,
+  // master는 공대 삭제(deleteGuild)만 할 수 있게 한다.
+  // 탈퇴하면 이 공대 자체가 더 이상 보이지 않아야 하므로 reload()는 부르지 않는다 —
+  // 호출한 쪽에서 다른 화면으로 이동시켜야 한다.
+  async function leaveGuild(memberId: string) {
+    const { error: leaveError } = await supabase
+      .from("guild_members")
+      .delete()
+      .eq("id", memberId);
+
+    if (leaveError) {
+      throw new Error(`공대 탈퇴에 실패했습니다: ${leaveError.message}`);
+    }
+  }
+
   // 공대 자체를 삭제한다. (master만 성공하도록 guilds_delete RLS 정책이 막고 있다.)
   // guild_members/guild_raid_visibility/parties(+party_slots)/guild_events(+guild_event_rsvps)가
   // 전부 guild_id에 on delete cascade가 걸려있어, 이 한 번의 delete로 관련 데이터가 모두 함께 지워진다.
@@ -176,6 +194,7 @@ export function useGuildMembers(guildId: string | undefined) {
     reload,
     updateMemberRole,
     regenerateInviteCode,
+    leaveGuild,
     deleteGuild,
   };
 }
