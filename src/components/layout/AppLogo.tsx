@@ -11,7 +11,7 @@ export function AppLogo({ className }: AppLogoProps) {
       viewBox="0 0 40 40"
       className={className}
       role="img"
-      aria-label="레이드 플래너 로고"
+      aria-label="로아팟 로고"
     >
       <rect x="2" y="2" width="16" height="16" rx="4" className="fill-blue-600" />
       <rect x="22" y="2" width="16" height="16" rx="4" className="fill-blue-600" />
