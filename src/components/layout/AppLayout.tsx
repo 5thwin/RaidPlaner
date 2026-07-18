@@ -1,6 +1,7 @@
-import { Outlet, useLocation } from "react-router";
+import { Link, Outlet, useLocation } from "react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PageHeaderProvider } from "@/contexts/PageHeaderContext";
+import { OPEN_CHAT_URL } from "@/lib/links";
 
 // 모든 라우트가 공유하는 레이아웃 라우트.
 // 고정 헤더(AppHeader)를 항상 위에 두고, 실제 페이지 콘텐츠는 Outlet으로 그 아래에 그린다.
@@ -25,6 +26,31 @@ export function AppLayout() {
         <main className={`mx-auto w-full ${maxWidthClass} flex-1 px-4 py-8`}>
           <Outlet />
         </main>
+        <footer className="flex w-full items-center justify-center gap-3 py-6 text-xs text-gray-400 dark:text-gray-500">
+          <Link
+            to="/privacy"
+            className="hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            개인정보처리방침
+          </Link>
+          <span>·</span>
+          <Link to="/terms" className="hover:text-gray-600 dark:hover:text-gray-300">
+            이용약관
+          </Link>
+          {OPEN_CHAT_URL && (
+            <>
+              <span>·</span>
+              <a
+                href={OPEN_CHAT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                오류 · 건의
+              </a>
+            </>
+          )}
+        </footer>
       </div>
     </PageHeaderProvider>
   );

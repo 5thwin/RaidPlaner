@@ -1,5 +1,6 @@
 import type { SVGProps } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 
 interface AuthStatusProps {
   // 모바일 헤더 우측처럼 좁은 공간에 놓일 때, 이름/버튼 텍스트 없이 아이콘 하나로만
@@ -27,6 +28,10 @@ function PersonIcon(props: SVGProps<SVGSVGElement>) {
 // 로그인 상태에 따라 "구글 로그인 버튼" 또는 "로그인한 유저 정보 + 로그아웃 버튼"을 보여준다.
 export function AuthStatus({ compact = false }: AuthStatusProps) {
   const { user, isLoading, signInWithGoogle, signOut } = useAuth();
+  // profiles.display_name은 유저가 프로필 모달에서 직접 바꿀 수 있으니, 구글 로그인
+  // 당시 이름(user.user_metadata.full_name)보다 이 값을 우선한다 — 아직 프로필을
+  // 못 불러왔거나 표시 이름을 따로 설정 안 했으면 구글 이름/이메일로 폴백한다.
+  const { profile } = useProfile();
 
   if (isLoading) {
     if (compact) {
@@ -66,8 +71,10 @@ export function AuthStatus({ compact = false }: AuthStatusProps) {
     );
   }
 
+  const displayName =
+    profile?.display_name ?? user.user_metadata.full_name ?? user.email ?? "";
+
   if (compact) {
-    const displayName = user.user_metadata.full_name ?? user.email ?? "";
     const initial = displayName.trim().charAt(0).toUpperCase() || "?";
 
     return (
@@ -83,7 +90,7 @@ export function AuthStatus({ compact = false }: AuthStatusProps) {
   return (
     <div className="flex items-center gap-3">
       <span className="text-sm text-gray-700 dark:text-gray-200">
-        {user.user_metadata.full_name ?? user.email} 님 환영합니다
+        {displayName} 님 환영합니다
       </span>
       <button
         type="button"

@@ -13,6 +13,8 @@ import { GuildDetailPage } from "@/pages/GuildDetailPage";
 import { JoinGuildPage } from "@/pages/JoinGuildPage";
 import { GuildCalendarPage } from "@/pages/GuildCalendarPage";
 import { GuildPartyMembersPage } from "@/pages/GuildPartyMembersPage";
+import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
+import { TermsPage } from "@/pages/TermsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 const root = document.getElementById("root");
@@ -27,6 +29,8 @@ ReactDOM.createRoot(root!).render(
               <Route path="/" element={<App />} />
               <Route path="/roster" element={<RosterPage />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
               <Route path="/guilds/join" element={<JoinGuildPage />} />
               <Route path="/guilds/:guildId" element={<GuildDetailPage />} />
               <Route

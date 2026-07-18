@@ -7,7 +7,6 @@ import type { GuildRole } from "@/types/guild";
 interface PartyCardProps {
   label: string;
   party: PartyWithSlots;
-  maxPlayers: number;
   myRole: GuildRole | null;
   userId: string | undefined;
   onToggleCleared: () => void;
@@ -26,7 +25,6 @@ interface PartyCardProps {
 export function PartyCard({
   label,
   party,
-  maxPlayers,
   myRole,
   userId,
   onToggleCleared,
@@ -62,11 +60,11 @@ export function PartyCard({
   const sortedSlots = [...party.slots].sort(
     (a, b) => a.slot_index - b.slot_index,
   );
-  // 파티 카드가 이제 고정 2열 그리드가 아니라 가로로 흐르는 레이아웃(PartyGrid)
-  // 안에서 min-w-80 기준으로 유연하게 폭을 갖기 때문에, 8인 레이드도 좁은 화면이
-  // 아닌 이상 대체로 8칸을 한 줄에 펼칠 만큼 폭이 나온다.
-  const gridColsClass =
-    maxPlayers === 8 ? "grid-cols-4 sm:grid-cols-8" : "grid-cols-2 sm:grid-cols-4";
+  // 8인 레이드도 4인 레이드와 슬롯 폭이 같도록 열 개수를 통일한다(grid-cols-4).
+  // 8칸을 한 줄에 다 펼치면 슬롯이 좁아져 캐릭터명/유저명이 상자 밖으로 넘치는
+  // 문제가 있었다(2026-07-19 사용자 확인) — 8인 레이드는 그냥 4칸씩 2줄로 자연스럽게
+  // 줄바꿈되게 두는 편이, 폭을 좁히는 것보다 낫다.
+  const gridColsClass = "grid-cols-2 sm:grid-cols-4";
 
   return (
     <div

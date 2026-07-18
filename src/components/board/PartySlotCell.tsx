@@ -19,13 +19,18 @@ export function PartySlotCell({
   onEmptyClick,
   onFilledClick,
 }: PartySlotCellProps) {
+  // 높이를 h-14 고정값으로 두면, 8인 레이드처럼 슬롯 폭이 좁아 캐릭터명/유저명이
+  // 한 줄에 안 들어가고 줄바꿈될 때 상자 밖으로 텍스트가 넘쳐 보였다. min-h-14로
+  // 바꿔서 내용이 두 줄이 되면 상자가 그만큼 자라게 하고, 캐릭터명은 최대 2줄까지만
+  // 허용한다(line-clamp-2) — 같은 파티 행(grid row) 안의 슬롯들은 grid가 자동으로
+  // 높이를 맞춰주므로, 8인/4인 모두 같은 규칙으로 자연스럽게 정렬된다.
   if (!slot.character) {
     return (
       <button
         type="button"
         disabled={!canInteract}
         onClick={onEmptyClick}
-        className="flex h-14 flex-col items-center justify-center rounded-md border border-dashed border-gray-200 text-xs text-gray-400 enabled:hover:border-blue-600 enabled:hover:text-blue-600 disabled:cursor-not-allowed dark:border-gray-700 dark:text-gray-500 dark:enabled:hover:border-blue-400 dark:enabled:hover:text-blue-400"
+        className="flex min-h-14 flex-col items-center justify-center rounded-md border border-dashed border-gray-200 text-xs text-gray-400 enabled:hover:border-blue-600 enabled:hover:text-blue-600 disabled:cursor-not-allowed dark:border-gray-700 dark:text-gray-500 dark:enabled:hover:border-blue-400 dark:enabled:hover:text-blue-400"
       >
         + 빈 자리
       </button>
@@ -43,19 +48,19 @@ export function PartySlotCell({
       disabled={!canInteract}
       onClick={onFilledClick}
       title={canInteract ? "클릭하면 슬롯에서 뺍니다" : undefined}
-      className={`flex h-14 flex-col items-center justify-center gap-px rounded-md border border-l-4 border-gray-200 bg-white px-1 text-center enabled:hover:border-red-600 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:enabled:hover:border-red-400 ${rosterColorScheme.bar}`}
+      className={`flex min-h-14 w-full flex-col items-center justify-center gap-px rounded-md border border-l-4 border-gray-200 bg-white px-1 py-1 text-center enabled:hover:border-red-600 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:enabled:hover:border-red-400 ${rosterColorScheme.bar}`}
     >
-      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+      <span className="line-clamp-2 w-full wrap-break-word text-sm font-medium leading-tight text-gray-900 dark:text-gray-100">
         {slot.character.character_name}
       </span>
-      <span className="text-xs text-gray-500 dark:text-gray-400">
+      <span className="w-full truncate text-xs text-gray-500 dark:text-gray-400">
         {slot.character.character_class_name} ·{" "}
         {slot.character.combat_power !== null
           ? slot.character.combat_power.toLocaleString()
           : "미확인"}
       </span>
       {slot.character.owner_display_name && (
-        <span className="text-[10px] text-gray-400 dark:text-gray-500">
+        <span className="w-full truncate text-[10px] text-gray-400 dark:text-gray-500">
           {slot.character.owner_display_name}
         </span>
       )}

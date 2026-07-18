@@ -195,7 +195,6 @@ export function GuildBoardPage({ guild }: GuildBoardPageProps) {
               ) : (
                 <PartyGrid
                   parties={partiesByRaid.get(raidType.id) ?? []}
-                  maxPlayers={raidType.max_players}
                   myRole={guild.role}
                   userId={user?.id}
                   onToggleCleared={handleToggleCleared}

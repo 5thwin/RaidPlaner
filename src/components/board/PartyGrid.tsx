@@ -4,7 +4,6 @@ import type { GuildRole } from "@/types/guild";
 
 interface PartyGridProps {
   parties: PartyWithSlots[];
-  maxPlayers: number;
   myRole: GuildRole | null;
   userId: string | undefined;
   onToggleCleared: (party: PartyWithSlots) => void;
@@ -17,7 +16,6 @@ interface PartyGridProps {
 // 각 파티 카드가 이미 자기 난이도 배지를 갖고 있어서 목록만 봐도 난이도가 구분된다.
 export function PartyGrid({
   parties,
-  maxPlayers,
   myRole,
   userId,
   onToggleCleared,
@@ -44,7 +42,6 @@ export function PartyGrid({
           <PartyCard
             label={`파티 ${index + 1}`}
             party={party}
-            maxPlayers={maxPlayers}
             myRole={myRole}
             userId={userId}
             onToggleCleared={() => onToggleCleared(party)}

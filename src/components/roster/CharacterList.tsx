@@ -41,36 +41,51 @@ export function CharacterList({
         return (
           <li
             key={character.id}
-            className={`flex flex-col gap-2.5 rounded-lg border border-l-4 bg-white p-3 shadow-sm transition hover:shadow-md dark:bg-gray-800 ${colorScheme.bar} ${
+            className={`relative flex flex-col gap-2.5 rounded-lg border border-l-4 bg-white p-3 shadow-sm transition hover:shadow-md dark:bg-gray-800 ${colorScheme.bar} ${
               character.is_active
                 ? "border-gray-200 dark:border-gray-700"
                 : "border-gray-100 opacity-55 dark:border-gray-800"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <label className="relative flex-none">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => onToggleSelect(character)}
-                  aria-label={`${character.character_name} 선택`}
-                  className="peer sr-only"
-                />
+            {/* 선택 체크박스: 이미지 모서리에 작게 얹혀있던 걸 카드 우측 상단으로
+                옮기고 크기도 키워서(2026-07-19 사용자 피드백: "너무 작다") 누르기 쉽게 했다. */}
+            <label className="absolute right-2 top-2 z-10">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => onToggleSelect(character)}
+                aria-label={`${character.character_name} 선택`}
+                className="peer sr-only"
+              />
+              <span className="flex h-6 w-6 items-center justify-center rounded-md border-2 border-gray-200 bg-white text-transparent peer-checked:border-blue-600 peer-checked:bg-blue-600 peer-checked:text-white dark:border-gray-600 dark:bg-gray-800">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-3.5 w-3.5"
+                >
+                  <path d="m5 13 4 4L19 7" />
+                </svg>
+              </span>
+            </label>
+
+            <div className="flex items-center gap-2.5 pr-8">
+              <div className="flex-none">
                 {character.character_image_url ? (
                   <img
                     src={character.character_image_url}
                     alt={character.character_name}
-                    className="h-12 w-12 rounded-md bg-gray-100 object-cover ring-2 ring-transparent peer-checked:ring-blue-600 dark:bg-gray-700"
+                    className="h-12 w-12 rounded-md bg-gray-100 object-cover dark:bg-gray-700"
                   />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-[10px] text-gray-400 ring-2 ring-transparent peer-checked:ring-blue-600 dark:bg-gray-700 dark:text-gray-500">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-[10px] text-gray-400 dark:bg-gray-700 dark:text-gray-500">
                     이미지 없음
                   </div>
                 )}
-                <span className="pointer-events-none absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-[9px] font-bold text-transparent peer-checked:bg-blue-600 peer-checked:text-white dark:border-gray-800 dark:bg-gray-600">
-                  ✓
-                </span>
-              </label>
+              </div>
 
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <div className="flex items-center gap-1.5">
