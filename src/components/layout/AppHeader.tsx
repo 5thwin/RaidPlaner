@@ -41,23 +41,6 @@ function UsersIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-function PlusCircleIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.7}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v8M8 12h8" />
-    </svg>
-  );
-}
-
 function TicketIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
@@ -83,8 +66,9 @@ const NAV_LINKS: {
 }[] = [
   { to: "/", label: "홈", Icon: HomeIcon },
   { to: "/roster", label: "원정대", Icon: UsersIcon },
-  { to: "/onboarding", label: "공대 만들기", Icon: PlusCircleIcon },
-  { to: "/guilds/join", label: "공대 참여", Icon: TicketIcon },
+  // 공대 만들기/참여를 하나의 화면(GuildStartPage)으로 합쳤으므로 메뉴도 하나로
+  // 줄인다(2026-07-19 사용자 요청). "/guilds/join"은 그 화면의 "참여" 탭이 기본이다.
+  { to: "/guilds/join", label: "공대 시작하기", Icon: TicketIcon },
 ];
 
 // 모든 페이지가 공유하는 고정(sticky) 상단 헤더.

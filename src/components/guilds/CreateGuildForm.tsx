@@ -6,7 +6,7 @@ interface CreateGuildFormProps {
 }
 
 // 공대 이름을 입력받는 폼. 생성 성공 후 어디로 이동할지는 이 폼을 쓰는
-// 페이지(OnboardingPage)가 결정한다.
+// 페이지(GuildStartPage)가 결정한다.
 export function CreateGuildForm({
   isCreating,
   onSubmit,

@@ -8,9 +8,8 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { RosterPage } from "@/pages/RosterPage";
-import { OnboardingPage } from "@/pages/OnboardingPage";
+import { GuildStartPage } from "@/pages/GuildStartPage";
 import { GuildDetailPage } from "@/pages/GuildDetailPage";
-import { JoinGuildPage } from "@/pages/JoinGuildPage";
 import { GuildCalendarPage } from "@/pages/GuildCalendarPage";
 import { GuildPartyMembersPage } from "@/pages/GuildPartyMembersPage";
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
@@ -28,10 +27,16 @@ ReactDOM.createRoot(root!).render(
             <Route element={<AppLayout />}>
               <Route path="/" element={<App />} />
               <Route path="/roster" element={<RosterPage />} />
-              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route
+                path="/onboarding"
+                element={<GuildStartPage defaultTab="create" />}
+              />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/terms" element={<TermsPage />} />
-              <Route path="/guilds/join" element={<JoinGuildPage />} />
+              <Route
+                path="/guilds/join"
+                element={<GuildStartPage defaultTab="join" />}
+              />
               <Route path="/guilds/:guildId" element={<GuildDetailPage />} />
               <Route
                 path="/guilds/:guildId/calendar"

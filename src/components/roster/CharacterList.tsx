@@ -10,10 +10,10 @@ interface CharacterListProps {
   onToggleSelect: (character: Character) => void;
 }
 
-// 원정대 캐릭터 목록. 캐릭터 이미지/전투력(아이템 레벨)을 카드형 그리드로 보여준다.
-// 정보 밀도를 낮추려고 이름+레벨/서버·직업/전투력·아이템레벨 3줄로 압축했고, 원정대
-// 색상(rosterColor)을 카드 좌측 바에 실제로 써서 원정대끼리 시각적으로 구분되게 한다
-// (2026-07-18 사용자 피드백: "레이아웃/정보 밀도"와 "전체적으로 밋밋함" 개선).
+// 원정대 캐릭터 목록. 캐릭터 이미지/전투력/아이템 레벨을 카드형 그리드로 보여준다.
+// 파티 편성에 안 쓰이는 캐릭터 레벨은 표시하지 않는다. 원정대 색상(rosterColor)을
+// 카드 좌측 바에 실제로 써서 원정대끼리 시각적으로 구분되게 한다(2026-07-18 사용자
+// 피드백: "레이아웃/정보 밀도"와 "전체적으로 밋밋함" 개선).
 // 비활성 캐릭터는 파티 빈 슬롯 후보 목록에서 제외되므로(도메인 규칙), 여기서는 흐리게 표시한다.
 export function CharacterList({
   characters,
@@ -72,6 +72,8 @@ export function CharacterList({
               </span>
             </label>
 
+            {/* 캐릭터 레벨은 파티 편성에 안 쓰이는 정보라 표시하지 않는다(2026-07-19
+                사용자 요청) — 아이템 레벨/전투력만 아래 통계 칸에 보여준다. */}
             <div className="flex items-center gap-2.5 pr-8">
               <div className="flex-none">
                 {character.character_image_url ? (
@@ -88,32 +90,13 @@ export function CharacterList({
               </div>
 
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    {character.character_name}
-                  </span>
-                  <span className="flex-none rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                    Lv.{character.character_level}
-                  </span>
-                </div>
+                <span className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  {character.character_name}
+                </span>
                 <span className="truncate text-xs text-gray-500 dark:text-gray-400">
                   {character.server_name} · {character.character_class_name}
                 </span>
               </div>
-
-              <button
-                type="button"
-                onClick={() => onToggleActive(character)}
-                aria-label={character.is_active ? "비활성화" : "활성화"}
-                title={character.is_active ? "비활성화" : "활성화"}
-                className={`flex h-6 w-6 flex-none items-center justify-center rounded-md ${
-                  character.is_active
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"
-                    : "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500"
-                }`}
-              >
-                <span className="h-2 w-2 rounded-full bg-current" />
-              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -136,6 +119,26 @@ export function CharacterList({
                 </span>
               </div>
             </div>
+
+            {/* 활성/비활성 토글: 이름 줄에 끼워 넣으니 캐릭터명 표시 영역이 좁아져서
+                (2026-07-19 사용자 피드백) 카드 하단에 전체 폭 버튼으로 뺐다. */}
+            <button
+              type="button"
+              onClick={() => onToggleActive(character)}
+              aria-label={
+                character.is_active
+                  ? "활성 상태 — 눌러서 비활성화"
+                  : "비활성 상태 — 눌러서 활성화"
+              }
+              className={`flex w-full items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-semibold ${
+                character.is_active
+                  ? "bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"
+                  : "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 flex-none rounded-full bg-current" />
+              {character.is_active ? "활성" : "비활성"}
+            </button>
           </li>
         );
       })}
