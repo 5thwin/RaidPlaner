@@ -19,6 +19,11 @@ interface CharacterRow {
   created_at: string;
   updated_at: string;
   profiles: { display_name: string | null } | null;
+  rosters: {
+    representative_character_name: string;
+    color: string;
+    created_at: string;
+  } | null;
 }
 
 // 파티 빈 슬롯에 넣을 수 있는 후보 캐릭터 목록을 불러오는 훅.
@@ -48,7 +53,7 @@ export function useAssignableCharacters(
     let query = supabase
       .from("characters")
       .select(
-        "id, owner_id, roster_id, server_name, character_name, character_level, character_class_name, item_avg_level, character_image_url, combat_power, is_active, created_at, updated_at, profiles(display_name)",
+        "id, owner_id, roster_id, server_name, character_name, character_level, character_class_name, item_avg_level, character_image_url, combat_power, is_active, created_at, updated_at, profiles(display_name), rosters(representative_character_name, color, created_at)",
       )
       .eq("is_active", true);
 
@@ -81,9 +86,13 @@ export function useAssignableCharacters(
       setCandidates([]);
     } else {
       setCandidates(
-        (data ?? []).map(({ profiles, ...character }) => ({
+        (data ?? []).map(({ profiles, rosters, ...character }) => ({
           ...character,
           owner_display_name: profiles?.display_name ?? null,
+          roster_representative_name:
+            rosters?.representative_character_name ?? null,
+          roster_color: rosters?.color ?? null,
+          roster_created_at: rosters?.created_at ?? null,
         })),
       );
     }

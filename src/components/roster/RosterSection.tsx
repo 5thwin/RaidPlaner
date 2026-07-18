@@ -11,6 +11,7 @@ import { CharacterList } from "@/components/roster/CharacterList";
 import { RosterColorPicker } from "@/components/roster/RosterColorPicker";
 import { DeleteRosterModal } from "@/components/roster/DeleteRosterModal";
 import { ConfirmModal } from "@/components/layout/ConfirmModal";
+import { getRosterColorScheme } from "@/lib/rosterColor";
 import type { Roster } from "@/types/roster";
 import type { Character } from "@/types/character";
 
@@ -246,8 +247,14 @@ export function RosterSection({
     setIsUpdateConfirmOpen(false);
   }
 
+  const colorScheme = getRosterColorScheme(roster.color);
+
   return (
-    <section className="flex w-full flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+    <section className="relative flex w-full flex-col gap-4 overflow-hidden rounded-lg border border-gray-200 bg-white p-4 pt-[19px] dark:border-gray-700 dark:bg-gray-800">
+      <span
+        className={`absolute inset-x-0 top-0 h-[3px] ${colorScheme.swatch}`}
+      />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           {isEditingName ? (
@@ -300,6 +307,11 @@ export function RosterSection({
             >
               {roster.representative_character_name}
             </button>
+          )}
+          {!isCharactersLoading && (
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+              {characters.length}개
+            </span>
           )}
           <RosterColorPicker color={roster.color} onSelect={handleColorSelect} />
           <button
@@ -382,28 +394,28 @@ export function RosterSection({
         </p>
       ) : (
         <>
-          <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex w-fit gap-1 rounded-full bg-gray-100 p-1 text-sm dark:bg-gray-700">
             <button
               type="button"
               onClick={() => setViewMode("active")}
-              className={`-mb-px border-b-2 px-1 pb-2 text-sm font-medium ${
+              className={`rounded-full px-3 py-1 font-medium ${
                 viewMode === "active"
-                  ? "border-blue-600 text-gray-900 dark:text-gray-100"
-                  : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-gray-100"
+                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
-              활성 ({activeCharacters.length})
+              활성 {activeCharacters.length}
             </button>
             <button
               type="button"
               onClick={() => setViewMode("inactive")}
-              className={`-mb-px border-b-2 px-1 pb-2 text-sm font-medium ${
+              className={`rounded-full px-3 py-1 font-medium ${
                 viewMode === "inactive"
-                  ? "border-blue-600 text-gray-900 dark:text-gray-100"
-                  : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-gray-100"
+                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
-              비활성 ({inactiveCharacters.length})
+              비활성 {inactiveCharacters.length}
             </button>
           </div>
 
@@ -411,6 +423,7 @@ export function RosterSection({
             characters={
               viewMode === "active" ? activeCharacters : inactiveCharacters
             }
+            rosterColor={roster.color}
             onToggleActive={toggleActive}
             selectedCharacterNames={selectedCharacterNames}
             onToggleSelect={handleToggleSelect}

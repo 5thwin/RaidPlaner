@@ -49,4 +49,9 @@ export interface PartyWithSlots extends Party {
 // (officer 이상은 다른 사람의 캐릭터도 후보로 볼 수 있으므로 누구 소유인지 표시가 필요하다).
 export interface AssignableCharacter extends Character {
   owner_display_name: string | null;
+  // 이 캐릭터가 속한 원정대의 표시 이름/색상/생성 시각. 후보 선택 모달에서
+  // 원정대별 탭으로 묶어 보여주는 데 쓴다.
+  roster_representative_name: string | null;
+  roster_color: string | null;
+  roster_created_at: string | null;
 }

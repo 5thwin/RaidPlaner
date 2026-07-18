@@ -8,10 +8,11 @@ import { MemberList } from "@/components/guilds/MemberList";
 import { InviteCodeCard } from "@/components/guilds/InviteCodeCard";
 import { RaidVisibilityList } from "@/components/guilds/RaidVisibilityList";
 import { DeleteGuildModal } from "@/components/guilds/DeleteGuildModal";
+import { GuildNameEditor } from "@/components/guilds/GuildNameEditor";
 import { ConfirmModal } from "@/components/layout/ConfirmModal";
 import { usePageHeaderExtra } from "@/hooks/usePageHeaderExtra";
 import { hasGuildRoleAtLeast } from "@/lib/guildRole";
-import type { GuildRole } from "@/types/guild";
+import type { GuildMemberWithProfile, GuildRole } from "@/types/guild";
 import type { RaidVisibilityEntry } from "@/types/raid";
 
 // 매 렌더마다 새 JSX 객체를 만들지 않도록 컴포넌트 바깥에서 한 번만 만든다.
@@ -31,7 +32,10 @@ const backToGuildListLink = (
 // - 공대원이면 누구나 멤버 목록을 볼 수 있다.
 // - officer 이상만 초대 코드 카드, 레이드 노출 설정 섹션을 볼 수 있다.
 //   (초대는 초대 코드(/guilds/join)로만 가능 — 대표 캐릭터명 검색 초대는 폐지됨)
-// - master만 멤버 역할을 바꿀 수 있다.
+// - master만 멤버 역할을 바꿀 수 있고, 공대 이름도 바꿀 수 있다.
+// - master 자리는 일반 역할 변경 드롭다운으로는 바꿀 수 없고, "공대장 위임" 절차
+//   (delegate_guild_master RPC)를 통해서만 다른 유저에게 넘어간다 — 위임하면 기존
+//   master는 officer로 강등된다.
 // 이 화면에서의 역할 분기는 어디까지나 "UI 노출"이고, 실제 차단은
 // guild_members/guilds/guild_raid_visibility 테이블의 Supabase RLS 정책이 DB 단에서 강제한다.
 export function GuildDetailPage() {
@@ -44,6 +48,8 @@ export function GuildDetailPage() {
     isLoading,
     error,
     updateMemberRole,
+    updateGuildName,
+    delegateMaster,
     regenerateInviteCode,
     leaveGuild,
     deleteGuild,
@@ -57,6 +63,8 @@ export function GuildDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [delegateTarget, setDelegateTarget] =
+    useState<GuildMemberWithProfile | null>(null);
 
   // "내 공대 목록으로" 뒤로가기 링크는 이 페이지에서만 필요한 헤더 콘텐츠이므로
   // 고정 헤더에 직접 올려보낸다.
@@ -99,6 +107,19 @@ export function GuildDetailPage() {
     }
   }
 
+  async function handleSaveGuildName(name: string) {
+    await updateGuildName(name);
+  }
+
+  async function handleDelegateMaster() {
+    if (!delegateTarget) {
+      return;
+    }
+
+    await delegateMaster(delegateTarget.user_id);
+    setDelegateTarget(null);
+  }
+
   async function handleDeleteGuild() {
     await deleteGuild();
     setIsDeleteModalOpen(false);
@@ -129,9 +150,11 @@ export function GuildDetailPage() {
 
   return (
     <div className="flex w-full flex-col items-center gap-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        {guild?.name ?? "공대"}
-      </h1>
+      <GuildNameEditor
+        guildName={guild.name}
+        canEdit={hasGuildRoleAtLeast(myRole, "master")}
+        onSave={handleSaveGuildName}
+      />
 
       {error && (
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -152,7 +175,9 @@ export function GuildDetailPage() {
       <MemberList
         members={members}
         myRole={myRole}
+        currentUserId={user.id}
         onChangeRole={handleChangeRole}
+        onRequestDelegateMaster={setDelegateTarget}
       />
 
       {myRole && myRole !== "master" && myMembershipId && (
@@ -231,6 +256,30 @@ export function GuildDetailPage() {
           confirmLabel="탈퇴"
           onConfirm={handleLeaveGuild}
           onClose={() => setIsLeaveModalOpen(false)}
+        />
+      )}
+
+      {delegateTarget && (
+        <ConfirmModal
+          title="공대장 위임"
+          message={
+            <>
+              정말 &apos;
+              {delegateTarget.representative_character_name ??
+                delegateTarget.display_name ??
+                "이 유저"}
+              &apos;님에게 공대장을 위임하시겠습니까?
+              <br />
+              위임하면 회원님은{" "}
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
+                운영진
+              </span>
+              이 됩니다.
+            </>
+          }
+          confirmLabel="위임"
+          onConfirm={handleDelegateMaster}
+          onClose={() => setDelegateTarget(null)}
         />
       )}
     </div>

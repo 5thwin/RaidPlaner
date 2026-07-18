@@ -107,8 +107,16 @@ function parseCombatPower(raw: string | null): number | null {
   return Number(raw.replace(/,/g, ""));
 }
 
+interface SyncCharactersOptions {
+  // 새 원정대를 처음 연결할 때만 넘긴다: 아이템 레벨이 가장 높은 N개만 활성화 상태로
+  // 시작하고 나머지는 비활성으로 시작한다. 넘기지 않으면(기존 원정대 갱신) is_active를
+  // 아예 건드리지 않아 사용자가 토글해둔 상태 그대로 유지된다.
+  activateTopByItemLevel?: number;
+}
+
 // 로스트아크 API에서 받아온 원정대 캐릭터들을 characters 테이블에 upsert한다.
-// - 신규 캐릭터: is_active는 컬럼 기본값(true)으로 채워진다.
+// - 신규 캐릭터: options.activateTopByItemLevel이 있으면 그 기준으로, 없으면
+//   컬럼 기본값(true)으로 is_active가 채워진다.
 // - 기존 캐릭터: API 원본 필드만 갱신되고, is_active는 upsert 대상에서 제외되어 그대로 유지된다.
 // - rosterId는 필수다. characters.roster_id는 not null이라, ON CONFLICT DO UPDATE로
 //   기존 행을 갱신할 뿐이어도 Postgres가 제안된 INSERT 값의 NOT NULL 제약을 먼저
@@ -117,10 +125,27 @@ export async function syncCharactersFromLostArk(
   ownerId: string,
   siblings: LostArkSiblingCharacter[],
   rosterId: string,
+  options?: SyncCharactersOptions,
 ): Promise<Character[]> {
   if (siblings.length === 0) {
     return [];
   }
+
+  // 서버+캐릭터명 조합으로 "아이템 레벨 상위 N개"를 골라낸다(캐릭터명은 서버당
+  // 유일하지만, 같은 원정대 안에 서버가 여러 개 섞일 수 있어 조합으로 식별한다).
+  const activeKeys =
+    options?.activateTopByItemLevel !== undefined
+      ? new Set(
+          [...siblings]
+            .sort(
+              (a, b) =>
+                parseItemAvgLevel(b.ItemAvgLevel) -
+                parseItemAvgLevel(a.ItemAvgLevel),
+            )
+            .slice(0, options.activateTopByItemLevel)
+            .map((sibling) => `${sibling.ServerName}::${sibling.CharacterName}`),
+        )
+      : null;
 
   const rows = siblings.map((sibling) => ({
     owner_id: ownerId,
@@ -132,11 +157,18 @@ export async function syncCharactersFromLostArk(
     item_avg_level: parseItemAvgLevel(sibling.ItemAvgLevel),
     character_image_url: sibling.CharacterImage ?? null,
     combat_power: parseCombatPower(sibling.CombatPower),
+    ...(activeKeys
+      ? {
+          is_active: activeKeys.has(
+            `${sibling.ServerName}::${sibling.CharacterName}`,
+          ),
+        }
+      : {}),
   }));
 
   const { data, error } = await supabase
     .from("characters")
-    .upsert(rows, { onConflict: "server_name,character_name" })
+    .upsert(rows, { onConflict: "owner_id,server_name,character_name" })
     .select();
 
   if (error) {

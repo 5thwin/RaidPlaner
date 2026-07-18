@@ -17,12 +17,12 @@ interface CharacterRow {
   created_at: string;
   updated_at: string;
   profiles: { display_name: string | null } | null;
-  rosters: { color: string } | null;
+  rosters: { color: string; created_at: string } | null;
 }
 
-// "파티원" 페이지(/guilds/:guildId/members)에서 쓰는, 공대원 전체의 활성 캐릭터
-// 목록을 불러오는 훅. guest를 포함한 모든 공대원이 다른 공대원의 활성 캐릭터를
-// 조회할 수 있어야 하므로(도메인 규칙), characters_select_by_guild_member RLS
+// "파티원" 페이지(/guilds/:guildId/members)에서 쓰는, 공대원 전체의 캐릭터
+// 목록(활성+비활성 모두)을 불러오는 훅. guest를 포함한 모든 공대원이 다른 공대원의
+// 캐릭터를 조회할 수 있어야 하므로(도메인 규칙), characters_select_by_guild_member RLS
 // 정책이 실제 조회 가능 범위를 최종적으로 강제한다 — 이 훅은 역할과 무관하게
 // 항상 "같은 공대 전체"를 대상으로 쿼리만 보낸다.
 //
@@ -87,9 +87,8 @@ export function useGuildCharacters(guildId: string | undefined) {
     const { data, error: fetchError } = await supabase
       .from("characters")
       .select(
-        "id, owner_id, roster_id, server_name, character_name, character_level, character_class_name, item_avg_level, character_image_url, combat_power, is_active, created_at, updated_at, profiles(display_name), rosters(color)",
+        "id, owner_id, roster_id, server_name, character_name, character_level, character_class_name, item_avg_level, character_image_url, combat_power, is_active, created_at, updated_at, profiles(display_name), rosters(color, created_at)",
       )
-      .eq("is_active", true)
       .in("owner_id", memberIds)
       .order("character_name", { ascending: true })
       .returns<CharacterRow[]>();
@@ -106,6 +105,7 @@ export function useGuildCharacters(guildId: string | undefined) {
         ...character,
         owner_display_name: profiles?.display_name ?? null,
         roster_color: rosters?.color ?? null,
+        roster_created_at: rosters?.created_at ?? null,
       }))
       // 누구 캐릭터인지 알아보기 쉽도록 소유자 이름으로 먼저 묶고, 그 안에서 캐릭터명순으로 정렬한다.
       .sort((a, b) => {

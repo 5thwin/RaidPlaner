@@ -41,6 +41,10 @@ export function useRosters() {
   }, [reload]);
 
   // 새 원정대(대표 캐릭터명)를 rosters에 등록하고, 방금 만든 roster를 반환한다.
+  // 주의: 여기서는 일부러 rosters state에 바로 반영하지 않는다 — 호출하는 쪽(RosterPage)이
+  // 이 roster.id로 캐릭터를 먼저 다 저장한 뒤 reload()를 불러야, 화면에 새 원정대
+  // 섹션이 나타나는 시점엔 이미 캐릭터가 저장되어 있어서 빈 목록으로 잠깐 보이는
+  // 문제(캐릭터 저장 전에 섹션이 먼저 마운트되어 조회하는 race condition)가 없다.
   async function createRoster(
     representativeCharacterName: string,
   ): Promise<Roster> {
@@ -60,8 +64,6 @@ export function useRosters() {
     if (insertError) {
       throw new Error(`원정대 추가에 실패했습니다: ${insertError.message}`);
     }
-
-    setRosters((prev) => [...prev, data]);
 
     return data;
   }

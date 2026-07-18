@@ -19,9 +19,10 @@ const backToBoardLink = (
 );
 
 // 공대 "파티원" 화면(/guilds/:guildId/members).
-// 왼쪽에서 공대원(role 무관, guest 포함 전부) 한 명을 고르면, 오른쪽에 그 사람이
-// 활성화한 캐릭터만 보여주는 마스터-디테일 레이아웃이다 — 읽기 전용 화면이라
-// 활성/비활성 토글이나 갱신 기능은 /roster에만 있다.
+// 왼쪽에서 공대원(role 무관, guest 포함 전부) 한 명을 고르면, 오른쪽에 그 사람의
+// 캐릭터 전체(활성+비활성)를 보여주는 마스터-디테일 레이아웃이다. 활성 캐릭터를
+// 원정대 연결 순서대로 먼저 보여주고, 비활성 캐릭터는 흐리게 표시해 그 아래에
+// 이어서 보여준다 — 읽기 전용 화면이라 활성/비활성 토글이나 갱신 기능은 /roster에만 있다.
 // 실시간 반영은 useGuildCharacters/useGuildMembers 내부의 Supabase Realtime 구독이 담당한다.
 export function GuildPartyMembersPage() {
   const { guildId } = useParams<{ guildId: string }>();
@@ -70,12 +71,48 @@ export function GuildPartyMembersPage() {
       : (members.find((member) => member.user_id === user.id) ?? members[0])
           ?.user_id ?? null;
 
-  const selectedCharacters = effectiveSelectedUserId
-    ? characters
-        .filter((character) => character.owner_id === effectiveSelectedUserId)
-        // 전투력이 높은 캐릭터부터 보여준다(미확인은 가장 낮은 취급으로 뒤로 보낸다).
-        .sort((a, b) => (b.combat_power ?? -1) - (a.combat_power ?? -1))
+  const ownerCharacters = effectiveSelectedUserId
+    ? characters.filter(
+        (character) => character.owner_id === effectiveSelectedUserId,
+      )
     : [];
+
+  // 여러 원정대를 가진 유저는 원정대를 연결한 순서(가장 먼저 연결한 게 A원정대)대로
+  // 캐릭터를 묶어서 보여준다. roster_created_at이 가장 이른 원정대부터 0, 1, 2...
+  const rosterCreatedAtById = new Map<string, string>();
+  for (const character of ownerCharacters) {
+    if (!rosterCreatedAtById.has(character.roster_id)) {
+      rosterCreatedAtById.set(
+        character.roster_id,
+        character.roster_created_at ?? "",
+      );
+    }
+  }
+
+  const rosterOrder = new Map<string, number>(
+    [...rosterCreatedAtById.entries()]
+      .sort(([, createdAtA], [, createdAtB]) =>
+        createdAtA.localeCompare(createdAtB),
+      )
+      .map(([rosterId], index) => [rosterId, index]),
+  );
+
+  // 활성 캐릭터를 전부 위로, 비활성 캐릭터를 전부 아래로 묶고, 각 묶음 안에서는
+  // 원정대 연결 순서(A원정대 -> B원정대 ...)로, 그 안에서는 전투력이 높은 순으로 보여준다
+  // (미확인 전투력은 가장 낮은 취급으로 뒤로 보낸다).
+  const selectedCharacters = [...ownerCharacters].sort((a, b) => {
+    if (a.is_active !== b.is_active) {
+      return a.is_active ? -1 : 1;
+    }
+
+    const rosterCompare =
+      (rosterOrder.get(a.roster_id) ?? 0) - (rosterOrder.get(b.roster_id) ?? 0);
+    if (rosterCompare !== 0) {
+      return rosterCompare;
+    }
+
+    return (b.combat_power ?? -1) - (a.combat_power ?? -1);
+  });
 
   return (
     <div className="flex w-full flex-col items-center gap-6">
@@ -95,6 +132,7 @@ export function GuildPartyMembersPage() {
             <GuildMemberSelector
               members={members}
               selectedUserId={effectiveSelectedUserId}
+              currentUserId={user.id}
               onSelect={setSelectedUserId}
             />
           </div>
@@ -102,7 +140,7 @@ export function GuildPartyMembersPage() {
           <div className="min-w-0 flex-1">
             {selectedCharacters.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                활성화된 캐릭터가 없습니다.
+                등록된 캐릭터가 없습니다.
               </p>
             ) : (
               <ul className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -114,10 +152,19 @@ export function GuildPartyMembersPage() {
                   return (
                     <li
                       key={character.id}
-                      className={`flex flex-col gap-1 rounded-lg border border-l-4 border-gray-200 bg-white px-4 py-4 dark:border-gray-700 dark:bg-gray-800 ${rosterColorScheme.bar}`}
+                      className={`flex flex-col gap-1 rounded-lg border border-l-4 px-4 py-4 ${rosterColorScheme.bar} ${
+                        character.is_active
+                          ? "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+                          : "border-gray-100 bg-gray-50 opacity-50 dark:border-gray-800 dark:bg-gray-900"
+                      }`}
                     >
-                      <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {character.character_name}
+                      <span className="flex items-center gap-1.5 truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <span className="truncate">{character.character_name}</span>
+                        {!character.is_active && (
+                          <span className="flex-none rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                            비활성
+                          </span>
+                        )}
                       </span>
                       <span className="truncate text-xs text-gray-500 dark:text-gray-400">
                         {character.character_class_name} · Lv.

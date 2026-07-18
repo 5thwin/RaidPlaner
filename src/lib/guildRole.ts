@@ -36,3 +36,20 @@ export function hasGuildRoleAtLeast(
 
   return GUILD_ROLE_RANK[role] >= GUILD_ROLE_RANK[minRole];
 }
+
+// 멤버 목록 정렬: 로그인한 본인이 항상 맨 위, 그 다음은 권한이 높은 순
+// (master > officer > member > guest)으로 정렬한다.
+export function sortGuildMembersByRoleAndSelf<
+  T extends { user_id: string; role: GuildRole },
+>(members: T[], currentUserId: string | null | undefined): T[] {
+  return [...members].sort((a, b) => {
+    const aIsMe = a.user_id === currentUserId;
+    const bIsMe = b.user_id === currentUserId;
+
+    if (aIsMe !== bIsMe) {
+      return aIsMe ? -1 : 1;
+    }
+
+    return GUILD_ROLE_RANK[b.role] - GUILD_ROLE_RANK[a.role];
+  });
+}

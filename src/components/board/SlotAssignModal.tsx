@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAssignableCharacters } from "@/hooks/useAssignableCharacters";
+import { getRosterColorScheme } from "@/lib/rosterColor";
 import type { RaidType } from "@/types/raid";
 import type { GuildRole } from "@/types/guild";
 
@@ -24,6 +25,8 @@ interface SlotAssignModalProps {
 // 빈 슬롯을 클릭했을 때 뜨는 후보 캐릭터 선택 모달.
 // 후보 범위(본인만 vs 같은 공대 전체)는 useAssignableCharacters가 역할에 맞춰 가져오고,
 // 여기서는 레이드 입장 조건(min_item_levels[difficultyIndex])으로 한 번 더 걸러서 보여준다.
+// officer 이상은 공대 전체 캐릭터가 한 번에 뜨면 너무 많아지므로, 원정대별 탭으로
+// 나눠서 보여준다 — 본인 원정대가 가장 먼저, 그다음 다른 공대원 원정대는 이름순이다.
 export function SlotAssignModal({
   guildId,
   raidType,
@@ -61,6 +64,77 @@ export function SlotAssignModal({
         .filter((c) => !occupiedOwnerIdsInParty.has(c.owner_id))
         .filter((c) => minItemLevel === null || c.item_avg_level >= minItemLevel),
     [candidates, minItemLevel, assignedCharacterIds, occupiedOwnerIdsInParty],
+  );
+
+  // 원정대별 탭 목록. 후보가 하나도 없는 원정대는 탭 자체를 만들지 않는다.
+  // 본인 원정대가 먼저, 그 안에서는 원정대를 연결한 순서대로. 그 다음 다른
+  // 공대원의 원정대는 이름순으로, 그 안에서는 마찬가지로 연결한 순서대로 나온다.
+  const rosterTabs = useMemo(() => {
+    const rosterById = new Map<
+      string,
+      {
+        rosterId: string;
+        name: string;
+        ownerDisplayName: string | null;
+        isMine: boolean;
+        color: string | null;
+        createdAt: string;
+      }
+    >();
+
+    for (const character of filteredCandidates) {
+      if (rosterById.has(character.roster_id)) {
+        continue;
+      }
+      rosterById.set(character.roster_id, {
+        rosterId: character.roster_id,
+        name: character.roster_representative_name ?? "이름 없는 원정대",
+        ownerDisplayName: character.owner_display_name,
+        isMine: character.owner_id === userId,
+        color: character.roster_color,
+        createdAt: character.roster_created_at ?? "",
+      });
+    }
+
+    return [...rosterById.values()].sort((a, b) => {
+      if (a.isMine !== b.isMine) {
+        return a.isMine ? -1 : 1;
+      }
+      if (!a.isMine) {
+        const ownerCompare = (a.ownerDisplayName ?? "").localeCompare(
+          b.ownerDisplayName ?? "",
+        );
+        if (ownerCompare !== 0) {
+          return ownerCompare;
+        }
+      }
+      return a.createdAt.localeCompare(b.createdAt);
+    });
+  }, [filteredCandidates, userId]);
+
+  const [selectedRosterId, setSelectedRosterId] = useState<string | null>(
+    null,
+  );
+
+  // 탭 목록이 바뀌었는데(모달을 처음 열었거나, 필터링 결과가 달라져서) 지금 선택된
+  // 원정대가 더 이상 없으면 첫 번째 탭(본인 원정대 우선)을 자동으로 선택한다.
+  useEffect(() => {
+    if (
+      selectedRosterId === null ||
+      !rosterTabs.some((tab) => tab.rosterId === selectedRosterId)
+    ) {
+      setSelectedRosterId(rosterTabs[0]?.rosterId ?? null);
+    }
+  }, [rosterTabs, selectedRosterId]);
+
+  const rosterFilteredCandidates = useMemo(
+    () =>
+      selectedRosterId === null
+        ? []
+        : filteredCandidates.filter(
+            (character) => character.roster_id === selectedRosterId,
+          ),
+    [filteredCandidates, selectedRosterId],
   );
 
   async function handleAssign(characterId: string) {
@@ -113,6 +187,34 @@ export function SlotAssignModal({
           </p>
         )}
 
+        {!isLoading && rosterTabs.length > 0 && (
+          <ul className="flex gap-1.5 overflow-x-auto pb-1">
+            {rosterTabs.map((tab) => {
+              const isSelected = tab.rosterId === selectedRosterId;
+              const colorScheme = getRosterColorScheme(tab.color ?? "");
+
+              return (
+                <li key={tab.rosterId} className="flex-none">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRosterId(tab.rosterId)}
+                    className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium ${
+                      isSelected
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                    }`}
+                  >
+                    <span
+                      className={`h-2 w-2 flex-none rounded-full ${colorScheme.swatch}`}
+                    />
+                    {tab.name}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
         {isLoading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
             후보 불러오는 중...
@@ -123,7 +225,7 @@ export function SlotAssignModal({
           </p>
         ) : (
           <ul className="flex max-h-80 flex-col gap-2 overflow-y-auto">
-            {filteredCandidates.map((character) => (
+            {rosterFilteredCandidates.map((character) => (
               <li key={character.id}>
                 <button
                   type="button"
@@ -145,9 +247,6 @@ export function SlotAssignModal({
                         : "미확인"}
                       {" · 아이템 레벨 "}
                       {character.item_avg_level.toLocaleString()}
-                      {character.owner_display_name && (
-                        <> · {character.owner_display_name}</>
-                      )}
                     </span>
                   </span>
                   <span className="text-xs font-medium text-blue-600 dark:text-blue-400">

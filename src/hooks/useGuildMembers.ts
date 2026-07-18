@@ -116,7 +116,9 @@ export function useGuildMembers(guildId: string | undefined) {
     reload();
   }, [reload]);
 
-  // 멤버의 역할을 바꾼다. (master만 성공하도록 guild_members_update RLS 정책이 막고 있다.)
+  // 멤버의 역할을 바꾼다. (master만 성공하도록 guild_members_update RLS 정책이 막고 있다.
+  // 그 정책은 role이 master인 행은 건드릴 수 없고, 새 role 값으로 master를 지정할 수도
+  // 없게 막아뒀다 — 공대장 강등/승격은 오직 delegateMaster()를 통해서만 가능하다.)
   async function updateMemberRole(memberId: string, role: GuildRole) {
     const { error: updateError } = await supabase
       .from("guild_members")
@@ -125,6 +127,44 @@ export function useGuildMembers(guildId: string | undefined) {
 
     if (updateError) {
       throw new Error(`역할 변경에 실패했습니다: ${updateError.message}`);
+    }
+
+    await reload();
+  }
+
+  // 공대 이름을 바꾼다. (master만 성공하도록 guilds_update RLS 정책이 막고 있다.)
+  async function updateGuildName(name: string) {
+    if (!guildId) {
+      return;
+    }
+
+    const { error: updateError } = await supabase
+      .from("guilds")
+      .update({ name })
+      .eq("id", guildId);
+
+    if (updateError) {
+      throw new Error(`공대 이름 변경에 실패했습니다: ${updateError.message}`);
+    }
+
+    await reload();
+  }
+
+  // 공대장을 다른 유저에게 위임한다: 기존 master는 officer로, 대상 유저는 master로
+  // 원자적으로 바뀐다(delegate_guild_master RPC, security definer 함수 안에서
+  // 트랜잭션으로 처리되므로 master가 0명/2명이 되는 중간 상태가 생기지 않는다).
+  async function delegateMaster(newMasterUserId: string) {
+    if (!guildId) {
+      return;
+    }
+
+    const { error: rpcError } = await supabase.rpc("delegate_guild_master", {
+      p_guild_id: guildId,
+      p_new_master_user_id: newMasterUserId,
+    });
+
+    if (rpcError) {
+      throw new Error(`공대장 위임에 실패했습니다: ${rpcError.message}`);
     }
 
     await reload();
@@ -193,6 +233,8 @@ export function useGuildMembers(guildId: string | undefined) {
     error,
     reload,
     updateMemberRole,
+    updateGuildName,
+    delegateMaster,
     regenerateInviteCode,
     leaveGuild,
     deleteGuild,

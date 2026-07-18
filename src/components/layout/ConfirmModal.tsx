@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 interface ConfirmModalProps {
   title: string;
-  message: string;
+  message: ReactNode;
   confirmLabel?: string;
   onConfirm: () => Promise<void> | void;
   onClose: () => void;

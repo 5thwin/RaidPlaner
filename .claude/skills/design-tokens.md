@@ -29,6 +29,7 @@ Tailwind v4는 기본적으로 OS 설정(`prefers-color-scheme`)만 따라가므
 - 위험/에러 텍스트: `text-red-600 dark:text-red-400`
 - 위험/에러 배경(경고 배지 등): `bg-red-50 dark:bg-red-900`
 - 성공/긍정 배경: `bg-emerald-600` (공통), 성공 텍스트: `text-emerald-600 dark:text-emerald-400`
+- 강조 배경(soft accent chip — 핵심 수치/활성 상태를 옅은 색 배경으로 강조할 때): `bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400`
 
 ## 난이도별 색상 (고정 팔레트, index 기반)
 레이드 난이도 색상은 이름이 아니라 `difficulty_index` 순서로 고정 팔레트에 매핑한다. **이 로직과 색상값의 유일한 출처는 `src/lib/difficultyColor.ts`다** — 다른 곳에서 난이도 색을 새로 정의하지 말고 항상 `getDifficultyColorScheme()`을 가져다 쓴다. (순서: index 0 초록 → 1 파랑 → 2 빨강 → 3 보라 → 4 이후 주황, 반복) 세 가지 변형이 있다:
