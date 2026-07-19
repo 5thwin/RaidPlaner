@@ -63,15 +63,17 @@ export function GuildMenuDropdown({ guildId, role }: GuildMenuDropdownProps) {
           >
             파티원
           </Link>
-          {hasGuildRoleAtLeast(role, "officer") && (
-            <Link
-              to={`/guilds/${guildId}`}
-              onClick={() => setIsOpen(false)}
-              className="rounded-md px-3 py-1.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-            >
-              공대 관리
-            </Link>
-          )}
+          {/* officer 이상은 초대 코드/레이드 노출 설정 등을 "관리"하러 오지만,
+              member/guest도 멤버 목록 확인이나 공대 탈퇴를 하려면 이 페이지에
+              들어갈 수 있어야 한다 — 예전엔 officer 이상에게만 링크가 보여서
+              하위 권한 유저는 탈퇴 기능에 아예 접근할 수 없었다(2026-07-19 확인). */}
+          <Link
+            to={`/guilds/${guildId}`}
+            onClick={() => setIsOpen(false)}
+            className="rounded-md px-3 py-1.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            {hasGuildRoleAtLeast(role, "officer") ? "공대 관리" : "공대 정보"}
+          </Link>
         </div>
       )}
     </div>
