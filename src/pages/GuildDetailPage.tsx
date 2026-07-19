@@ -5,6 +5,7 @@ import { useGuildMembers } from "@/hooks/useGuildMembers";
 import { useGuildRaidVisibility } from "@/hooks/useGuildRaidVisibility";
 import { PageSpinner } from "@/components/layout/PageSpinner";
 import { MemberList } from "@/components/guilds/MemberList";
+import { GuildRoleGuide } from "@/components/guilds/GuildRoleGuide";
 import { InviteCodeCard } from "@/components/guilds/InviteCodeCard";
 import { RaidVisibilityList } from "@/components/guilds/RaidVisibilityList";
 import { DeleteGuildModal } from "@/components/guilds/DeleteGuildModal";
@@ -171,6 +172,8 @@ export function GuildDetailPage() {
           onRegenerate={regenerateInviteCode}
         />
       )}
+
+      <GuildRoleGuide />
 
       <MemberList
         members={members}
