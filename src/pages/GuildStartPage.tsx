@@ -70,12 +70,19 @@ export function GuildStartPage({ defaultTab }: GuildStartPageProps) {
     setJoinSuccessMessage(null);
 
     try {
-      await joinGuild(trimmed);
+      const guildId = await joinGuild(trimmed);
       setJoinSuccessMessage(
         "공대에 참여했습니다. 잠시 후 메인 화면으로 이동합니다.",
       );
       setJoinCode("");
-      setTimeout(() => navigate("/"), 1200);
+      // 그냥 "/"로만 보내면 App.tsx가 기존에 선택돼 있던(보통 제일 먼저 가입한)
+      // 공대를 그대로 보여줘서, 방금 참여한 공대가 아니라 엉뚱한 공대가 뜨는
+      // 문제가 있었다(2026-07-20 사용자 확인). location.state로 방금 참여한
+      // guildId를 같이 넘겨서 App.tsx가 그 공대를 우선 선택하게 한다.
+      setTimeout(
+        () => navigate("/", { state: { selectedGuildId: guildId } }),
+        1200,
+      );
     } catch (err) {
       setJoinError(err instanceof Error ? err.message : "참여에 실패했습니다.");
     }

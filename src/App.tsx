@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Navigate, useLocation } from "react-router";
 import { GuildSwitcher } from "@/components/board/GuildSwitcher";
 import { GuildMenuDropdown } from "@/components/board/GuildMenuDropdown";
 import { PageSpinner } from "@/components/layout/PageSpinner";
@@ -15,12 +15,34 @@ import { usePageHeaderExtra } from "@/hooks/usePageHeaderExtra";
 function App() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const { guilds, isLoading: isGuildsLoading, error } = useMyGuilds();
+  const location = useLocation();
   const [selectedGuildId, setSelectedGuildId] = useState<string | null>(null);
+
+  // 초대 코드로 막 참여한 공대로 곧장 이동하고 싶을 때(GuildStartPage), "/"로
+  // 이동하면서 location.state에 그 guildId를 실어 보낸다. useMyGuilds는 새로고침
+  // 깜빡임 방지를 위해 sessionStorage 캐시를 먼저 보여주는데, 그 캐시엔 방금
+  // 참여한 공대가 아직 없을 수 있어서 — 캐시가 갱신될 때까지는 이 값을 기억해뒀다가
+  // guilds 목록에 실제로 나타나는 순간 선택하도록 ref로 들고 있는다(state로 하면
+  // "적용 완료" 렌더 한 번 더 필요해서 오히려 더 늦게 반영된다).
+  const pendingGuildIdRef = useRef<string | null>(
+    (location.state as { selectedGuildId?: string } | null)?.selectedGuildId ??
+      null,
+  );
 
   // 소속 공대 목록이 바뀌거나(가입/탈퇴) 아직 선택된 공대가 없으면 첫 번째 공대를 기본값으로 쓴다.
   useEffect(() => {
     if (guilds.length === 0) {
       setSelectedGuildId(null);
+      return;
+    }
+
+    const pendingGuildId = pendingGuildIdRef.current;
+    if (
+      pendingGuildId &&
+      guilds.some((guild) => guild.guild_id === pendingGuildId)
+    ) {
+      setSelectedGuildId(pendingGuildId);
+      pendingGuildIdRef.current = null;
       return;
     }
 
