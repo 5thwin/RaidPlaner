@@ -35,6 +35,7 @@ export function RosterPage() {
     profile,
     isLoading: isProfileLoading,
     updateDisplayName,
+    deleteAccount,
   } = useProfile();
 
   const [isAdding, setIsAdding] = useState(false);
@@ -183,6 +184,7 @@ export function RosterPage() {
           onSave={async (name) => {
             await updateDisplayName(name);
           }}
+          onDeleteAccount={deleteAccount}
           onClose={() => setIsProfileModalOpen(false)}
         />
       )}

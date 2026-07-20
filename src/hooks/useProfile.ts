@@ -14,7 +14,7 @@ const PROFILE_CACHE_KEY = "raid-planner:profile";
 // 사용자 확인). 직전 세션에서 캐시해둔 프로필을 먼저 보여주고 백그라운드에서
 // 조용히 재조회하면 이 깜빡임이 없어진다.
 export function useProfile() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(() =>
     readSessionCache<Profile>(PROFILE_CACHE_KEY),
   );
@@ -77,11 +77,29 @@ export function useProfile() {
     return data;
   }
 
+  // 계정을 완전히 삭제한다. delete_own_account() RPC(security definer)가
+  // auth.users에서 본인 행을 지우면, profiles 이하 모든 데이터(characters,
+  // rosters, guild_members 등)가 FK cascade로 함께 지워진다. 공대장으로 있는
+  // 공대가 남아있으면 RPC가 에러를 던지므로 그대로 위로 전달한다.
+  // 삭제 성공 직후엔 이 세션의 access token이 더 이상 유효한 계정을 가리키지
+  // 않으므로, 곧바로 로그아웃까지 처리해서 화면이 깨지지 않게 한다.
+  async function deleteAccount(): Promise<void> {
+    const { error: rpcError } = await supabase.rpc("delete_own_account");
+
+    if (rpcError) {
+      throw new Error(`계정 삭제에 실패했습니다: ${rpcError.message}`);
+    }
+
+    writeSessionCache(PROFILE_CACHE_KEY, null);
+    await signOut();
+  }
+
   return {
     profile,
     isLoading,
     error,
     reload,
     updateDisplayName,
+    deleteAccount,
   };
 }

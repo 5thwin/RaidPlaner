@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { GoogleGLogo } from "@/components/auth/GoogleGLogo";
@@ -68,9 +69,12 @@ export function AuthStatus({ compact = false }: AuthStatusProps) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-gray-700 dark:text-gray-200">
+      <Link
+        to="/roster"
+        className="text-sm text-gray-700 hover:text-blue-600 hover:underline dark:text-gray-200 dark:hover:text-blue-400"
+      >
         {displayName} 님 환영합니다
-      </span>
+      </Link>
       <button
         type="button"
         onClick={signOut}

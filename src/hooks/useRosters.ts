@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
+import { getRosterColorPalette } from "@/lib/rosterColor";
 import type { Roster } from "@/types/roster";
 
 // 로그인한 유저 본인이 보유한 원정대(rosters) 목록을 불러오고,
@@ -52,11 +53,18 @@ export function useRosters() {
       throw new Error("로그인이 필요합니다.");
     }
 
+    // 새 원정대는 팔레트 중 하나를 무작위로 배정한다 — 매번 기본값(blue)으로
+    // 시작하면 원정대가 여러 개일 때 색이 자꾸 겹쳐서, 유저가 매번 직접
+    // 색을 바꿔줘야 했다(2026-07-20 사용자 요청).
+    const palette = getRosterColorPalette();
+    const randomColor = palette[Math.floor(Math.random() * palette.length)].key;
+
     const { data, error: insertError } = await supabase
       .from("rosters")
       .insert({
         owner_id: user.id,
         representative_character_name: representativeCharacterName,
+        color: randomColor,
       })
       .select()
       .single();

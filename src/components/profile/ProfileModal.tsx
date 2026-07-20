@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyGuilds } from "@/hooks/useMyGuilds";
 import { ProfileNameEditor } from "@/components/profile/ProfileNameEditor";
+import { DeleteAccountModal } from "@/components/profile/DeleteAccountModal";
 import { GuildRoleIcon } from "@/components/guilds/GuildRoleIcon";
 import { getRosterColorScheme } from "@/lib/rosterColor";
 import type { Roster } from "@/types/roster";
@@ -13,6 +14,7 @@ interface ProfileModalProps {
   avatarUrl: string | null;
   rosters: Roster[];
   onSave: (name: string) => Promise<void>;
+  onDeleteAccount: () => Promise<void>;
   onClose: () => void;
 }
 
@@ -27,11 +29,13 @@ export function ProfileModal({
   avatarUrl,
   rosters,
   onSave,
+  onDeleteAccount,
   onClose,
 }: ProfileModalProps) {
   const { signOut } = useAuth();
   const { guilds, isLoading: isGuildsLoading } = useMyGuilds();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -137,17 +141,32 @@ export function ProfileModal({
           )}
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
           <button
             type="button"
             disabled={isSigningOut}
             onClick={handleSignOut}
-            className="self-start rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            className="rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
           >
             {isSigningOut ? "로그아웃 중..." : "로그아웃"}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="rounded-md px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/40"
+          >
+            계정 삭제
+          </button>
         </div>
       </div>
+
+      {isDeleteModalOpen && (
+        <DeleteAccountModal
+          onDelete={onDeleteAccount}
+          onClose={() => setIsDeleteModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
