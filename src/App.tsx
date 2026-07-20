@@ -4,6 +4,7 @@ import { GuildSwitcher } from "@/components/board/GuildSwitcher";
 import { GuildMenuDropdown } from "@/components/board/GuildMenuDropdown";
 import { PageSpinner } from "@/components/layout/PageSpinner";
 import { GuildBoardPage } from "@/pages/GuildBoardPage";
+import { LandingPage } from "@/pages/LandingPage";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyGuilds } from "@/hooks/useMyGuilds";
 import { usePageHeaderExtra } from "@/hooks/usePageHeaderExtra";
@@ -67,16 +68,7 @@ function App() {
   }
 
   if (!user) {
-    return (
-      <div className="flex flex-col items-center gap-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          로아팟
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          헤더에서 Google 계정으로 로그인해주세요.
-        </p>
-      </div>
-    );
+    return <LandingPage />;
   }
 
   if (isGuildsLoading) {
