@@ -2,6 +2,7 @@ import './index.css'
 import App from './App.tsx'
 
 import ReactDOM from "react-dom/client";
+import { Analytics } from "@vercel/analytics/react";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -53,5 +54,6 @@ ReactDOM.createRoot(root!).render(
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
+    <Analytics />
   </ErrorBoundary>,
 )

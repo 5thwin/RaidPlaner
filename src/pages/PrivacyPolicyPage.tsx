@@ -7,7 +7,7 @@ import { LegalPageSection as Section } from "@/components/layout/LegalPageSectio
 // 아래 내용은 실제로 이 앱(profiles/characters/rosters/guilds 등 테이블)이 다루는
 // 데이터를 기준으로 작성했다. 스키마가 바뀌면(새 개인정보 항목 추가 등) 이 페이지도
 // 같이 업데이트해야 한다.
-const LAST_UPDATED = "2026-07-18";
+const LAST_UPDATED = "2026-07-20";
 const CONTACT_EMAIL = "hisy6887@gmail.com";
 
 export function PrivacyPolicyPage() {
@@ -75,7 +75,11 @@ export function PrivacyPolicyPage() {
         <ul className="list-disc pl-5">
           <li>Supabase, Inc. — 데이터베이스, 로그인 인증, 서버 운영</li>
           <li>Google LLC — 구글 소셜 로그인</li>
-          <li>Vercel Inc. — 웹사이트 호스팅</li>
+          <li>
+            Vercel Inc. — 웹사이트 호스팅, 방문 통계(Vercel Analytics). 방문
+            통계는 개인을 특정하지 않는 방문 수·페이지·유입 경로 등 집계
+            데이터만 수집합니다(쿠키를 사용하지 않습니다).
+          </li>
           <li>
             스마일게이트 로스트아크 오픈 API — 입력한 캐릭터명으로 공개된
             게임 정보 조회
