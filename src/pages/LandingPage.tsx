@@ -1,6 +1,7 @@
 import type { SVGProps } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLogo } from "@/components/layout/AppLogo";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 function RosterIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -123,13 +124,9 @@ export function LandingPage() {
             함께 보는 파티 현황판.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={signInWithGoogle}
-          className="rounded-md bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Google로 시작하기
-        </button>
+        {/* 구글 브랜딩 가이드라인상 버튼 문구는 "Sign in/up/Continue with Google" 중
+            하나로만 써야 해서, 임의 문구("Google로 시작하기") 대신 표준 문구를 쓴다. */}
+        <GoogleSignInButton onClick={signInWithGoogle} />
       </section>
 
       <section className="grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">

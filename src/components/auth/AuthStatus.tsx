@@ -1,28 +1,12 @@
-import type { SVGProps } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { GoogleGLogo } from "@/components/auth/GoogleGLogo";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 interface AuthStatusProps {
   // 모바일 헤더 우측처럼 좁은 공간에 놓일 때, 이름/버튼 텍스트 없이 아이콘 하나로만
   // 로그인 상태를 보여준다(전체 로그인/로그아웃 정보는 오버레이 메뉴 쪽에 그대로 남는다).
   compact?: boolean;
-}
-
-function PersonIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.7}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20a7 7 0 0 1 14 0" />
-    </svg>
-  );
 }
 
 // 로그인 상태에 따라 "구글 로그인 버튼" 또는 "로그인한 유저 정보 + 로그아웃 버튼"을 보여준다.
@@ -47,28 +31,23 @@ export function AuthStatus({ compact = false }: AuthStatusProps) {
 
   if (!user) {
     if (compact) {
+      // 좁은 모바일 헤더에서도 "이건 구글 로그인 버튼"이라는 게 한눈에 보이도록
+      // 아이콘만 구글 G 로고로 바꿨다(정식 버튼 규격은 아니지만, 일반 사람 아이콘보다
+      // 브랜딩 가이드라인의 취지에 더 가깝다).
       return (
         <button
           type="button"
           onClick={signInWithGoogle}
           aria-label="Google로 로그인"
           title="Google로 로그인"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
         >
-          <PersonIcon className="h-4 w-4" />
+          <GoogleGLogo className="h-4 w-4" />
         </button>
       );
     }
 
-    return (
-      <button
-        type="button"
-        onClick={signInWithGoogle}
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-      >
-        Google로 로그인
-      </button>
-    );
+    return <GoogleSignInButton onClick={signInWithGoogle} />;
   }
 
   const displayName =
