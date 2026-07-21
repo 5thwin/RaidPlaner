@@ -7,6 +7,7 @@ import { PageSpinner } from "@/components/layout/PageSpinner";
 import { MemberList } from "@/components/guilds/MemberList";
 import { GuildRoleGuide } from "@/components/guilds/GuildRoleGuide";
 import { InviteCodeCard } from "@/components/guilds/InviteCodeCard";
+import { DiscordGuildLinkCard } from "@/components/guilds/DiscordGuildLinkCard";
 import { RaidVisibilityList } from "@/components/guilds/RaidVisibilityList";
 import { DeleteGuildModal } from "@/components/guilds/DeleteGuildModal";
 import { GuildNameEditor } from "@/components/guilds/GuildNameEditor";
@@ -50,6 +51,7 @@ export function GuildDetailPage() {
     error,
     updateMemberRole,
     updateGuildName,
+    updateDiscordGuildId,
     delegateMaster,
     regenerateInviteCode,
     leaveGuild,
@@ -170,6 +172,13 @@ export function GuildDetailPage() {
         <InviteCodeCard
           inviteCode={guild.invite_code}
           onRegenerate={regenerateInviteCode}
+        />
+      )}
+
+      {hasGuildRoleAtLeast(myRole, "master") && guild && (
+        <DiscordGuildLinkCard
+          discordGuildId={guild.discord_guild_id}
+          onSave={updateDiscordGuildId}
         />
       )}
 

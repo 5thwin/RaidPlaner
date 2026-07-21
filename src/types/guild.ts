@@ -7,9 +7,12 @@ export type GuildRole = "guest" | "member" | "officer" | "master";
 export interface Guild {
   id: string;
   name: string;
-  created_by: string;
+  // 계정 삭제 시 생성자 프로필이 사라지면 null로 남는다(on delete set null).
+  created_by: string | null;
   created_at: string;
   invite_code: string;
+  // 연동된 디스코드 서버 ID. /파티현황 등 디스코드 슬래시 명령어가 쓴다.
+  discord_guild_id: string | null;
 }
 
 // 로그인한 유저가 속한 공대 하나. guild_members + guilds 조인 결과를 담는다.

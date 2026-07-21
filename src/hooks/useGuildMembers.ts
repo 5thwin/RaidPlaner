@@ -150,6 +150,27 @@ export function useGuildMembers(guildId: string | undefined) {
     await reload();
   }
 
+  // 이 공대에 연동할 디스코드 서버 ID를 설정한다. (master만 성공하도록
+  // guilds_update RLS 정책이 막고 있다.) 빈 문자열을 넘기면 연동을 해제한다
+  // (discord_guild_id는 unique라, 다른 공대가 이미 그 서버를 쓰고 있으면
+  // DB 유니크 제약 위반 에러가 그대로 올라온다).
+  async function updateDiscordGuildId(discordGuildId: string) {
+    if (!guildId) {
+      return;
+    }
+
+    const { error: updateError } = await supabase
+      .from("guilds")
+      .update({ discord_guild_id: discordGuildId.trim() || null })
+      .eq("id", guildId);
+
+    if (updateError) {
+      throw new Error(`디스코드 연동에 실패했습니다: ${updateError.message}`);
+    }
+
+    await reload();
+  }
+
   // 공대장을 다른 유저에게 위임한다: 기존 master는 officer로, 대상 유저는 master로
   // 원자적으로 바뀐다(delegate_guild_master RPC, security definer 함수 안에서
   // 트랜잭션으로 처리되므로 master가 0명/2명이 되는 중간 상태가 생기지 않는다).
@@ -234,6 +255,7 @@ export function useGuildMembers(guildId: string | undefined) {
     reload,
     updateMemberRole,
     updateGuildName,
+    updateDiscordGuildId,
     delegateMaster,
     regenerateInviteCode,
     leaveGuild,

@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMyGuilds } from "@/hooks/useMyGuilds";
 import { ProfileNameEditor } from "@/components/profile/ProfileNameEditor";
 import { DeleteAccountModal } from "@/components/profile/DeleteAccountModal";
+import { DiscordLinkSection } from "@/components/profile/DiscordLinkSection";
 import { GuildRoleIcon } from "@/components/guilds/GuildRoleIcon";
 import { getRosterColorScheme } from "@/lib/rosterColor";
 import type { Roster } from "@/types/roster";
@@ -140,6 +141,8 @@ export function ProfileModal({
             </ul>
           )}
         </div>
+
+        <DiscordLinkSection />
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
           <button
