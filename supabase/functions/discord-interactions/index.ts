@@ -9,12 +9,10 @@
 // 검증한다 — 이게 유일한 인증 수단이라 검증을 통과 못 하면 무조건 401이다.
 //
 // 명령어:
-// - "/파티현황 미완료|전체|내캐릭터 [공대:이름]": 이 요청이 온 디스코드 서버
-//   (interaction.guild_id)를 guilds.discord_guild_id로 찾아 그 공대의 파티
-//   현황을 보여준다. 한 디스코드 서버에 공대가 여러 개 연동돼 있으면(2026-07-21)
-//   "공대" 옵션으로 어느 공대인지 지정해야 한다(resolveGuild 참고) — 하나뿐이면
-//   생략 가능. "내캐릭터"는 추가로 요청한 디스코드 유저(interaction.member.user.id)를
-//   discord_links에서 찾아 로아팟 계정으로 변환한다.
+// - "/파티현황 미완료|전체|내캐릭터": 이 요청이 온 디스코드 서버(interaction.guild_id)를
+//   guilds.discord_guild_id로 찾아 그 공대의 파티 현황을 보여준다(서버 하나엔
+//   공대 하나만 연동된다). "내캐릭터"는 추가로 요청한 디스코드 유저
+//   (interaction.member.user.id)를 discord_links에서 찾아 로아팟 계정으로 변환한다.
 // - "/연동 코드:XXXXXX": 로아팟 프로필 화면에서 발급한 1회성 코드로 디스코드 계정을
 //   로아팟 계정에 연결한다.
 //
@@ -106,59 +104,20 @@ interface PartyRow {
   party_slots: PartySlotRow[];
 }
 
-// 디스코드 서버 하나에 공대가 여러 개 연동돼 있을 수 있어서(2026-07-21) 배열로
-// 돌려준다. 어느 공대를 쓸지 고르는 건 resolveGuild()가 담당한다.
-async function getGuildsForDiscordServer(
+// 디스코드 서버 하나엔 공대 하나만 연동된다(guilds.discord_guild_id unique).
+// 여러 공대가 서버 하나를 공유하는 구조를 시도했다가(20260721140000) 다시
+// 1:1로 롤백했다(2026-07-21 사용자 확인).
+async function getGuildForDiscordServer(
   supabase: SupabaseClient,
   discordGuildId: string,
-): Promise<{ id: string; name: string }[]> {
+): Promise<{ id: string; name: string } | null> {
   const { data } = await supabase
     .from("guilds")
     .select("id, name")
-    .eq("discord_guild_id", discordGuildId);
+    .eq("discord_guild_id", discordGuildId)
+    .maybeSingle();
 
-  return data ?? [];
-}
-
-// 이 디스코드 서버에 연동된 공대 중 실제로 조회할 공대 하나를 정한다.
-// - 연동된 공대가 없으면 안내 메시지.
-// - 하나뿐이면 그걸 그대로 쓴다(공대 이름을 안 넘겨도 됨 — 기존 방식 그대로 동작).
-// - 여러 개면 "공대" 옵션(guildNameOption)으로 이름을 지정해야 하고, 없거나
-//   일치하는 게 없으면 연동된 공대 이름 목록과 함께 안내 메시지를 돌려준다.
-async function resolveGuild(
-  supabase: SupabaseClient,
-  discordGuildId: string,
-  guildNameOption: string | undefined,
-): Promise<{ id: string; name: string } | { errorMessage: string }> {
-  const guilds = await getGuildsForDiscordServer(supabase, discordGuildId);
-
-  if (guilds.length === 0) {
-    return {
-      errorMessage:
-        "이 디스코드 서버는 아직 로아팟 공대와 연동되지 않았습니다. 공대장이 로아팟 공대 상세 페이지에서 먼저 연동해주세요.",
-    };
-  }
-
-  if (guilds.length === 1) {
-    return guilds[0];
-  }
-
-  const names = guilds.map((g) => g.name).join(", ");
-
-  if (!guildNameOption) {
-    return {
-      errorMessage: `이 서버엔 공대가 여러 개 연동되어 있어요. "공대" 옵션으로 지정해주세요. (연동된 공대: ${names})`,
-    };
-  }
-
-  const matched = guilds.find((g) => g.name === guildNameOption);
-  if (!matched) {
-    return {
-      errorMessage: `"${guildNameOption}"라는 이름의 연동된 공대를 찾을 수 없어요. (연동된 공대: ${names})`,
-    };
-  }
-
-  return matched;
+  return data;
 }
 
 async function getLinkedUserId(
@@ -298,22 +257,14 @@ async function handlePartyStatusCommand(
     return ephemeralReply("이 명령어는 디스코드 서버 안에서만 사용할 수 있습니다.");
   }
 
-  const subcommandOption = interaction.data?.options?.[0];
-  const subcommand = subcommandOption?.name;
-  // "공대" 옵션은 서브커맨드(미완료/전체/내캐릭터) 아래에 중첩돼 있다.
-  const guildNameOption = subcommandOption?.options?.find(
-    (o) => o.name === "공대",
-  )?.value;
-
-  const resolved = await resolveGuild(
-    supabase,
-    discordGuildId,
-    guildNameOption,
-  );
-  if ("errorMessage" in resolved) {
-    return ephemeralReply(resolved.errorMessage);
+  const guild = await getGuildForDiscordServer(supabase, discordGuildId);
+  if (!guild) {
+    return ephemeralReply(
+      "이 디스코드 서버는 아직 로아팟 공대와 연동되지 않았습니다. 공대장이 로아팟 공대 상세 페이지에서 먼저 연동해주세요.",
+    );
   }
-  const guild = resolved;
+
+  const subcommand = interaction.data?.options?.[0]?.name;
 
   if (subcommand === "내캐릭터") {
     const discordUserId = interaction.member?.user?.id ?? interaction.user?.id;
